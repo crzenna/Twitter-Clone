@@ -1,0 +1,35 @@
+name: Pylint, testing and testing coverage
+on:
+  push:
+    branches: [ development, main, master, staging ]
+  pull_request:
+    branches: [ development, main, master, staging ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+    - name: Analysing the code with pylint
+      run: |
+        pylint $(git ls-files '*.py')
+
+    - name: Run test, Generate coverage report and upload coverage
+      run: |
+        pip install -r requirements.txt
+        pip install pytest
+        pip install pytest-cov
+        pytest
+        pytest --cov=./ --cov-report=xml
+        pip install codecov && codecov -t ${{ secrets.CODECOV_TOKEN }}
